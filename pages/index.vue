@@ -1,13 +1,25 @@
 <template>
   <div class="container">
-    <div>
+    <div class="chart">
+      <b-form-group v-slot="{ ariaDescribedby }" label="Time span buttons">
+        <b-form-radio-group
+          id="btn-darios-1"
+          v-model="selected"
+          :options="buttonOptions"
+          :aria-describedby="ariaDescribedby"
+          name="radio-btn-default"
+          buttons
+          @change="getChart"
+        >
+        </b-form-radio-group>
+      </b-form-group>
       <crypto-chart
         v-if="loaded"
-        :chart-data="datacollection"
+        :chart-data="dataCollection"
         :options="options"
+        :styles="myStyles"
       >
       </crypto-chart>
-      {{ data }}
     </div>
   </div>
 </template>
@@ -18,37 +30,64 @@ export default {
   components: {
     CryptoChart,
   },
-  async asyncData(context) {
-    const fromDate = new Date(2017, 7, 1, 3, 15, 30)
-    const toDate = new Date(2021, 2, 10, 18, 50)
-    const params = {
-      vs_currency: 'jpy',
-      from: Math.floor(fromDate.getTime() / 1000),
-      to: Math.floor(toDate.getTime() / 1000),
+  async asyncData({ store, error }) {
+    try {
+      const params = {
+        vs_currency: 'jpy',
+        date: '1',
+      }
+      await store.dispatch('getChart', params)
+    } catch (e) {
+      return error({ message: e.message, statusCode: e.response.status })
     }
-    console.log(params)
-    const CoinGecko = require('coingecko-api')
-    const CoinGeckoClient = new CoinGecko()
-    const retValue = await CoinGeckoClient.coins.fetchMarketChartRange(
-      'bitcoin',
-      params
-    )
-    const loaded = true
+    // const loaded = true
     // ラベル(日付)
-    const labels = retValue.data.prices.map((point) => point[0])
-    // 値段
-    const prices = retValue.data.prices.map((point) => point[1])
-    const datacollection = {
-      labels,
-      datasets: [
-        {
-          label: 'BTC Price',
-          backgroudColor: '#f87979',
-          data: prices,
-        },
+    // const options = null
+    // return { loaded, datacollection, options }
+  },
+  data() {
+    return {
+      selected: '24h',
+      buttonOptions: [
+        { text: '24h', value: '24h', days: '1' },
+        { text: '7d', value: '7d', days: '7' },
+        { text: '14d', value: '14d', days: '14' },
+        { text: '90d', value: '90d', days: '90' },
+        { text: '180d', value: '180d', days: '180' },
+        { text: '1y', value: '1y', days: '365' },
+        { text: 'max', value: 'max', days: 'max' },
       ],
     }
-    return { loaded, datacollection }
+  },
+  computed: {
+    dataCollection() {
+      return this.$store.state.dataCollection
+    },
+    loaded() {
+      return this.$store.state.loaded
+    },
+    options() {
+      return this.$store.state.options
+    },
+    myStyles() {
+      return {
+        height: '100%',
+        width: '100%',
+        'max-width': '800px',
+        position: 'relative',
+      }
+    },
+  },
+  methods: {
+    async getChart() {
+      const params = {
+        vs_currency: 'jpy',
+        days: this.buttonOptions.find(
+          (selected) => selected.value === this.selected
+        ).days,
+      }
+      await this.$store.dispatch('getChart', params)
+    },
   },
 }
 </script>
@@ -61,6 +100,12 @@ export default {
   justify-content: center;
   align-items: center;
   text-align: center;
+}
+
+.chart {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 .title {
