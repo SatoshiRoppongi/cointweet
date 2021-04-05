@@ -9,6 +9,14 @@ export const state = () => ({
     legend: {
       display: true,
     },
+    scales: {
+      xAxes: [
+        {
+          type: 'time',
+          autoSkip: false,
+        },
+      ],
+    },
   },
 })
 
@@ -33,8 +41,8 @@ export const actions = {
       .fetchMarketChart('bitcoin', payload)
       .then((retValue) => {
         // ラベル(日付)
-        const labels = retValue.data.prices.map((point) =>
-          new Date(point[0]).toLocaleDateString()
+        const labels = retValue.data.prices.map(
+          (point) => new Date(point[0]) // .toLocaleDateString()
         )
         console.log(labels)
 
@@ -47,6 +55,8 @@ export const actions = {
               label: 'BTC Price',
               backgroundColor: '#f87979',
               data: prices,
+              fill: false,
+              pointRadius: 0,
             },
           ],
         }
